@@ -8,16 +8,23 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = FastAPI(title="WITH Backend")
 
+
 class ClassifyInput(BaseModel):
     text: str
+
 
 class RespondInput(BaseModel):
     text: str
     state: str
 
+
 @app.get("/")
 def health():
-    return {"status": "WITH online"}
+    return JSONResponse(
+        content={"status": "WITH online"},
+        media_type="application/json; charset=utf-8",
+    )
+
 
 @app.post("/classify")
 def classify(data: ClassifyInput):
@@ -29,13 +36,15 @@ Text:
 {data.text}
 """
     r = client.responses.create(model="gpt-4.1-mini", input=prompt)
-    state = r.output_text.strip().lower()
+    state = (r.output_text or "").strip().lower()
+
     if state not in ["elevated", "critical"]:
         state = "normal"
+
     return JSONResponse(
-    content={"state": state},
-    media_type="application/json; charset=utf-8"
-)
+        content={"state": state},
+        media_type="application/json; charset=utf-8",
+    )
 
 
 @app.post("/respond")
@@ -54,7 +63,8 @@ User state: {data.state}
 User text: {data.text}
 """
     r = client.responses.create(model="gpt-4.1-mini", input=prompt)
+
     return JSONResponse(
-    content={"reply": r.output_text.strip()},
-    media_type="application/json; charset=utf-8"
-)
+        content={"reply": (r.output_text or "").strip()},
+        media_type="application/json; charset=utf-8",
+    )
