@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import os
 from openai import OpenAI
+from fastapi.responses import JSONResponse
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -31,7 +32,11 @@ Text:
     state = r.output_text.strip().lower()
     if state not in ["elevated", "critical"]:
         state = "normal"
-    return {"state": state}
+    return JSONResponse(
+    content={"state": state},
+    media_type="application/json; charset=utf-8"
+)
+
 
 @app.post("/respond")
 def respond(data: RespondInput):
@@ -49,4 +54,7 @@ User state: {data.state}
 User text: {data.text}
 """
     r = client.responses.create(model="gpt-4.1-mini", input=prompt)
-    return {"reply": r.output_text.strip()}
+    return JSONResponse(
+    content={"reply": r.output_text.strip()},
+    media_type="application/json; charset=utf-8"
+)
